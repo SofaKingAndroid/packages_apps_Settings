@@ -28,6 +28,7 @@ import android.os.UserHandle;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.telephony.MSimTelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -66,7 +67,6 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
     private static final String KEY_EQUIPMENT_ID = "fcc_equipment_id";
     private static final String PROPERTY_EQUIPMENT_ID = "ro.ril.fccid";
 
-    static final int TAPS_TO_BE_A_DEVELOPER = 7;
     private static final String KEY_MOD_VERSION = "mod_version";
 
     private static final String KEY_DEVICE_CHIPSET = "device_chipset";
@@ -76,10 +76,9 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
     private static final String KEY_DEVICE_REAR_CAMERA = "device_rear_camera";
     private static final String KEY_DEVICE_FRONT_CAMERA = "device_front_camera";
     private static final String KEY_DEVICE_SCREEN_RESOLUTION = "device_screen_resolution";
+    private static final String KEY_STATUS = "status_info";
 
     long[] mHits = new long[3];
-    int mDevHitCountdown;
-    Toast mDevHitToast;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -105,6 +104,11 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
         } else if (!SELinux.isSELinuxEnforced()) {
             String status = getResources().getString(R.string.selinux_status_permissive);
             setStringSummary(KEY_SELINUX_STATUS, status);
+        }
+
+        if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+            findPreference(KEY_STATUS).getIntent().setClassName(
+                    "com.android.settings","com.android.settings.deviceinfo.msim.MSimStatus");
         }
 
         // Remove selinux information if property is not present
@@ -134,7 +138,8 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
                 PROPERTY_EQUIPMENT_ID);
 
         // Remove Baseband version if wifi-only device
-        if (Utils.isWifiOnly(getActivity())) {
+        if (Utils.isWifiOnly(getActivity())
+                || (MSimTelephonyManager.getDefault().isMultiSimEnabled())) {
             getPreferenceScreen().removePreference(findPreference(KEY_BASEBAND_VERSION));
         }
 
@@ -177,15 +182,6 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        mDevHitCountdown = getActivity().getSharedPreferences(DevelopmentSettings.PREF_FILE,
-                Context.MODE_PRIVATE).getBoolean(DevelopmentSettings.PREF_SHOW,
-                        android.os.Build.TYPE.equals("eng")) ? -1 : TAPS_TO_BE_A_DEVELOPER;
-        mDevHitToast = null;
-    }
-
-    @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         if (preference.getKey().equals(KEY_FIRMWARE_VERSION)) {
             System.arraycopy(mHits, 1, mHits, 0, mHits.length-1);
@@ -206,46 +202,12 @@ public class DeviceInfoSettings extends SettingsPreferenceFragment {
             if (mHits[0] >= (SystemClock.uptimeMillis()-500)) {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.setClassName("android",
-                        com.android.internal.app.AOKPLogoActivity.class.getName());
+                        com.android.internal.app.SKALogoActivity.class.getName());
                 try {
                     startActivity(intent);
                 } catch (Exception e) {
                     Log.e(LOG_TAG, "Unable to start activity " + intent.toString());
                 }
-            }
-        } else if (preference.getKey().equals(KEY_BUILD_NUMBER)) {
-            // Don't enable developer options for secondary users.
-            if (UserHandle.myUserId() != UserHandle.USER_OWNER) return true;
-
-            if (mDevHitCountdown > 0) {
-                mDevHitCountdown--;
-                if (mDevHitCountdown == 0) {
-                    getActivity().getSharedPreferences(DevelopmentSettings.PREF_FILE,
-                            Context.MODE_PRIVATE).edit().putBoolean(
-                                    DevelopmentSettings.PREF_SHOW, true).apply();
-                    if (mDevHitToast != null) {
-                        mDevHitToast.cancel();
-                    }
-                    mDevHitToast = Toast.makeText(getActivity(), R.string.show_dev_on,
-                            Toast.LENGTH_LONG);
-                    mDevHitToast.show();
-                } else if (mDevHitCountdown > 0
-                        && mDevHitCountdown < (TAPS_TO_BE_A_DEVELOPER-2)) {
-                    if (mDevHitToast != null) {
-                        mDevHitToast.cancel();
-                    }
-                    mDevHitToast = Toast.makeText(getActivity(), getResources().getQuantityString(
-                            R.plurals.show_dev_countdown, mDevHitCountdown, mDevHitCountdown),
-                            Toast.LENGTH_SHORT);
-                    mDevHitToast.show();
-                }
-            } else if (mDevHitCountdown < 0) {
-                if (mDevHitToast != null) {
-                    mDevHitToast.cancel();
-                }
-                mDevHitToast = Toast.makeText(getActivity(), R.string.show_dev_already,
-                        Toast.LENGTH_LONG);
-                mDevHitToast.show();
             }
         }
         return super.onPreferenceTreeClick(preferenceScreen, preference);
