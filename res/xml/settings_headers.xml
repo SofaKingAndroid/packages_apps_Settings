@@ -209,11 +209,7 @@
     <!-- Superuser -->
     <header
         android:id="@+id/superuser"
-<<<<<<< HEAD
         android:fragment="com.koushikdutta.superuser.PolicyNativeFragment"
-=======
-        android:fragment="com.android.settings.cyanogenmod.superuser.PolicyNativeFragment"
->>>>>>> 8f4ccf5... Switch to new Superuser
         android:icon="@drawable/ic_action_permission"
         android:title="@string/superuser" />
 
