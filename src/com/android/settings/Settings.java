@@ -129,8 +129,6 @@ public class Settings extends PreferenceActivity
             R.id.accessibility_settings,
             R.id.quick_links,
             R.id.rom_control,
-            R.id.themes,
-            R.id.advanced_settings,
             R.id.sprint_tools
     };
 
@@ -429,9 +427,6 @@ public class Settings extends PreferenceActivity
             int id = (int) header.id;
             if (id == R.id.operator_settings || id == R.id.manufacturer_settings) {
                 Utils.updateHeaderToSpecificActivityFromMetaDataOrRemove(this, target, header);
-            } else if (id == R.id.advanced_settings) {
-                if (!needsAdvancedSettings())
-                    target.remove(header);
             } else if (id == R.id.sprint_tools) {
                 if (!isSprintDevice())
                     target.remove(header);
