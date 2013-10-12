@@ -4755,7 +4755,6 @@ two in order to insert additional control points. \'Remove\' deletes the selecte
     <string name="root_access_apps">Apps only</string>
     <string name="root_access_adb">ADB only</string>
     <string name="root_access_all">Apps and ADB</string
-    <string name="root_access_all">Apps and ADB</string>
 
     <!-- Halo 2 -->
     <string name="app_halo_label_black">Blacklist HALO notifications</string>
